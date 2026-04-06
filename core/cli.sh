@@ -246,7 +246,7 @@ cmd_init() {
   mkdir -p "${PROJECT_ROOT}/${base_dir}/.pipeline"
 
   # Generate flow.json via loader
-  generate_flow_json "$feature" "$base_dir" "$flow_yaml" "$flow_json_path" "${extra_flags[@]}"
+  generate_flow_json "$feature" "$base_dir" "$flow_yaml" "$flow_json_path" ${extra_flags[@]+"${extra_flags[@]}"}
 
   # Store CLI-provided config values in flow.json
   if [[ -n "$figma_url" ]]; then

@@ -112,13 +112,17 @@ build_stage_graph() {
 
     strategy=$(yq ".phases.${phase}.strategy // \"\"" "$merged_config")
     skip=$(yq ".phases.${phase}.skip // false" "$merged_config")
-    manual_gate=$(yq ".phases.${phase}.manual_gate // true" "$merged_config")
+    manual_gate=$(yq ".phases.${phase}.manual_gate // \"true\"" "$merged_config")
+    # yq's // operator treats false as falsy, so explicitly check for false
+    local raw_gate
+    raw_gate=$(yq ".phases.${phase}.manual_gate" "$merged_config")
+    [[ "$raw_gate" == "false" ]] && manual_gate="false"
 
     [[ "$skip" == "true" ]] && continue
 
-    # strategy -> module name conversion (for spec phase)
+    # strategy -> module name conversion (e.g., "from-requirements" -> "spec-from-requirements")
     if [[ -n "$strategy" && "$strategy" != "null" && "$strategy" != "" ]]; then
-      modules="$strategy"
+      modules="${phase}-${strategy}"
     else
       modules=$(yq ".phases.${phase}.modules // [] | .[]" "$merged_config")
     fi
@@ -251,7 +255,8 @@ build_stage_graph() {
 generate_flow_json() {
   local feature="$1" base_dir="$2" flow_yaml="$3" output="$4"
   shift 4
-  local extra_flags=("$@")
+  local extra_flags=()
+  [[ $# -gt 0 ]] && extra_flags=("$@")
 
   # Merge config (preset + user)
   local merged_config
@@ -259,7 +264,7 @@ generate_flow_json() {
   resolve_flow_config "$flow_yaml" > "$merged_config"
 
   # Apply extra flags to merged config
-  for flag in "${extra_flags[@]}"; do
+  for flag in ${extra_flags[@]+"${extra_flags[@]}"}; do
     case "$flag" in
       --skip-design)
         # Mark design phase as skipped

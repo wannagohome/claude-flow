@@ -30,9 +30,6 @@ phases:
   impl:
     modules: [impl-tdd]
     manual_gate: false
-  verify:
-    modules: [verify-ui]
-    manual_gate: false
 
 test:
   unit:
