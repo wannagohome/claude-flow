@@ -1,10 +1,28 @@
 {
-  "name": "claude-flow",
+  "name": "@wannagohome/claude-flow",
   "version": "0.1.0",
   "description": "Multi-session pipeline orchestrator for Claude Code",
   "bin": {
     "claude-flow": "./bin/claude-flow"
   },
-  "keywords": ["claude", "pipeline", "orchestrator", "ai", "tdd"],
+  "files": [
+    "bin/",
+    "core/",
+    "protocols/",
+    "modules/",
+    "providers/",
+    "presets/",
+    "skill/",
+    "templates/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wannagohome/claude-flow.git"
+  },
+  "homepage": "https://github.com/wannagohome/claude-flow",
+  "bugs": {
+    "url": "https://github.com/wannagohome/claude-flow/issues"
+  },
+  "keywords": ["claude", "claude-code", "pipeline", "orchestrator", "ai", "tdd", "multi-session"],
   "license": "MIT"
 }
