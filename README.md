@@ -16,7 +16,7 @@ Multi-session pipeline orchestrator for Claude Code. Runs each stage in a fresh 
 
 ```bash
 # Install
-npm install -g claude-flow
+npm install -g @wannagohome/claude-flow
 
 # Initialize project
 cd my-project
@@ -211,7 +211,7 @@ claude-flow <feature> --force-continue     # Force past blockers
 Install the skill for `/flow` slash commands:
 
 ```bash
-ln -s $(npm root -g)/claude-flow/skill/flow.md ~/.claude/commands/flow.md
+ln -s $(npm root -g)/@wannagohome/claude-flow/skill/flow.md ~/.claude/commands/flow.md
 ```
 
 Then use `/flow init my-feature`, `/flow run my-feature`, etc.
