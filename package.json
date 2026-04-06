@@ -1,6 +1,6 @@
 {
   "name": "@wannagohome/claude-flow",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Multi-session pipeline orchestrator for Claude Code",
   "bin": {
     "claude-flow": "./bin/claude-flow"
