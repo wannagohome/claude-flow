@@ -100,101 +100,167 @@ usage() {
 
 cmd_setup() {
   local flow_yaml="${PROJECT_ROOT}/.claude/flow.yaml"
+  local conventions="${PROJECT_ROOT}/.claude/flow/conventions.md"
+  local force=false
 
-  if [[ -f "$flow_yaml" ]]; then
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --force) force=true; shift ;;
+      *) shift ;;
+    esac
+  done
+
+  if [[ -f "$flow_yaml" && "$force" != "true" ]]; then
     echo -e "${YELLOW}flow.yaml already exists: ${flow_yaml}${NC}"
-    echo -e "Edit it directly or delete and re-run setup."
+    echo -e "Use ${BOLD}claude-flow setup --force${NC} to overwrite."
     return 1
   fi
 
   mkdir -p "${PROJECT_ROOT}/.claude/flow"
 
   echo -e "${BOLD}claude-flow setup${NC}"
+  echo -e "${DIM}Analyzing project with Claude...${NC}"
   echo ""
 
-  # Preset selection
-  echo -e "${CYAN}Available presets:${NC}"
-  echo -e "  1. ${BOLD}full-tdd${NC}   — Full pipeline (spec -> test plan -> design -> implement -> verify)"
-  echo -e "  2. ${BOLD}impl-only${NC}  — Implementation + verification only"
-  echo -e "  3. ${BOLD}spec-only${NC}  — Spec + test plan only"
-  echo -e "  4. ${BOLD}custom${NC}     — Start from scratch"
-  echo ""
-  read -rp "Select preset [1-4, default: 1]: " preset_choice
-  preset_choice="${preset_choice:-1}"
-
-  local preset_name=""
-  case "$preset_choice" in
-    1) preset_name="full-tdd" ;;
-    2) preset_name="impl-only" ;;
-    3) preset_name="spec-only" ;;
-    4) preset_name="" ;;
-    *) preset_name="full-tdd" ;;
-  esac
-
-  # Test commands
-  read -rp "Unit test command [default: npm test]: " test_cmd
-  test_cmd="${test_cmd:-npm test}"
-
-  read -rp "E2E test command [leave empty to skip]: " e2e_cmd
-
-  # Generate flow.yaml
-  {
-    if [[ -n "$preset_name" ]]; then
-      echo "extends: ${preset_name}"
-      echo ""
+  # Read available modules and presets for the prompt
+  local available_modules=""
+  for mod_dir in "$FLOW_HOME"/modules/*/; do
+    local mod_name
+    mod_name=$(basename "$mod_dir")
+    local mod_desc=""
+    if [[ -f "${mod_dir}/module.yaml" ]]; then
+      mod_desc=$(yq '.description // ""' "${mod_dir}/module.yaml" 2>/dev/null)
     fi
-    echo "project:"
-    echo "  conventions: ./flow/conventions.md"
+    available_modules="${available_modules}  - ${mod_name}: ${mod_desc}\n"
+  done
+
+  local available_presets=""
+  for preset_file in "$FLOW_HOME"/presets/*.yaml; do
+    local preset_name
+    preset_name=$(basename "$preset_file" .yaml)
+    local first_line
+    first_line=$(head -1 "$preset_file" | sed 's/^# //')
+    available_presets="${available_presets}  - ${preset_name}: ${first_line}\n"
+  done
+
+  # Assemble setup prompt
+  local setup_prompt
+  setup_prompt="$(cat << PROMPT
+# claude-flow setup
+
+Analyze this project and generate two configuration files for claude-flow, a multi-session pipeline orchestrator.
+
+## Your Task
+
+1. Read the project structure, config files, and existing code to understand:
+   - Language, framework, project type
+   - Package manager (lock file)
+   - Test commands (unit, e2e)
+   - E2E testing framework (if any)
+   - Coding conventions (from CLAUDE.md, .editorconfig, linting configs, existing code patterns)
+   - Architecture patterns used
+   - Build/compile/lint commands
+
+2. Generate \`${PROJECT_ROOT}/.claude/flow.yaml\`
+3. Generate \`${PROJECT_ROOT}/.claude/flow/conventions.md\`
+
+## Available Presets
+
+$(echo -e "$available_presets")
+
+## Available Modules
+
+$(echo -e "$available_modules")
+
+## flow.yaml Schema
+
+\`\`\`yaml
+extends: <preset-name>           # base preset to extend
+
+project:
+  conventions: ./flow/conventions.md
+
+providers:
+  figma:
+    enabled: <true/false>
+  confluence:
+    enabled: <true/false>
+
+phases:
+  spec:
+    strategy: <from-requirements|from-scratch>
+    manual_gate: <true/false>
+  test-plan:
+    modules: [<tc-pict|tc-manual>, <e2e-detox|e2e-playwright>]
+    manual_gate: <true/false>
+  design:
+    modules: [design-interface]
+    manual_gate: <false>
+    skip: <true/false>            # skip this phase entirely
+  impl:
+    modules: [<impl-tdd|impl-simple>]
+    manual_gate: <false>
+
+overrides:
+  code-review:
+    pre_gates: [compile, lint, verify-integration]  # if project has these commands
+
+test:
+  unit:
+    command: "<test command>"
+  e2e:
+    command: "<e2e command>"
+    update_command: "<e2e update command>"           # optional
+    setup_command: "<dev server start command>"      # optional, for web workspace
+    setup_port: <port>                               # optional
+\`\`\`
+
+## conventions.md
+
+This file is injected into EVERY pipeline session as context. Include:
+- Architecture patterns and rules
+- Code style conventions
+- Framework-specific rules (component patterns, naming, etc.)
+- Testing conventions (mock patterns, assertion style, etc.)
+- Import conventions
+- Any project-specific rules that an AI should follow
+
+If CLAUDE.md exists, use its content as the primary source but restructure for clarity.
+If no conventions file exists, analyze the codebase to infer conventions from actual code patterns.
+
+## Rules
+
+- Write BOTH files. Do not skip either one.
+- flow.yaml: Choose the most appropriate preset and modules based on what you find.
+- conventions.md: Be specific and actionable. Include code examples where helpful.
+- Do NOT include providers that the project doesn't use.
+- Do NOT include E2E config if the project has no E2E tests.
+- Match test commands exactly to what's in package.json / Makefile / pyproject.toml / etc.
+PROMPT
+)"
+
+  run_claude_session "$setup_prompt" "setup" "claude-sonnet-4-6"
+  local rc=$?
+
+  if [[ $rc -eq 0 ]]; then
     echo ""
-    echo "providers:"
-    echo "  figma:"
-    echo "    enabled: false"
-    echo "  confluence:"
-    echo "    enabled: false"
-    echo ""
-    echo "models:"
-    echo "  write: claude-opus-4-6"
-    echo "  review: claude-sonnet-4-6"
-    echo "  audit: claude-opus-4-6"
-    echo "  escalation:"
-    echo "    model: claude-opus-4-6"
-    echo "    after_round: 5"
-    echo ""
-    echo "review:"
-    echo "  max_rounds: 3"
-    echo ""
-    echo "test:"
-    echo "  unit:"
-    echo "    command: \"${test_cmd}\""
-    if [[ -n "$e2e_cmd" ]]; then
-      echo "  e2e:"
-      echo "    command: \"${e2e_cmd}\""
+    if [[ -f "$flow_yaml" ]]; then
+      echo -e "${GREEN}✓${NC} ${flow_yaml}"
+    else
+      echo -e "${RED}✗ flow.yaml was not generated${NC}"
+      return 1
     fi
-  } > "$flow_yaml"
-
-  # Create empty conventions.md
-  local conventions="${PROJECT_ROOT}/.claude/flow/conventions.md"
-  if [[ ! -f "$conventions" ]]; then
-    cat > "$conventions" << 'CONVEOF'
-# Project Conventions
-
-<!-- Describe your project's coding conventions here.
-     This file is injected into every pipeline session as Layer 2.
-     Include: naming conventions, error handling patterns, import style,
-     testing patterns, framework-specific rules, etc. -->
-
-CONVEOF
+    if [[ -f "$conventions" ]]; then
+      echo -e "${GREEN}✓${NC} ${conventions}"
+    else
+      echo -e "${YELLOW}⚠ conventions.md was not generated${NC}"
+    fi
+    echo ""
+    echo -e "${BOLD}Ready!${NC} Run ${CYAN}claude-flow init <feature>${NC} to start."
+  else
+    echo -e "${RED}✗ Setup failed${NC}"
+    return 1
   fi
-
-  echo ""
-  echo -e "${GREEN}✓ Setup complete${NC}"
-  echo -e "  ${DIM}${flow_yaml}${NC}"
-  echo -e "  ${DIM}${conventions}${NC}"
-  echo ""
-  echo -e "${BOLD}Next steps:${NC}"
-  echo -e "  1. Edit ${CYAN}.claude/flow.yaml${NC} to customize your pipeline"
-  echo -e "  2. Write conventions in ${CYAN}.claude/flow/conventions.md${NC}"
-  echo -e "  3. Run ${BOLD}claude-flow init <feature>${NC} to start a pipeline"
 }
 
 # ── Init: create flow.json from flow.yaml ──
