@@ -2,7 +2,15 @@
 set -euo pipefail
 
 # Resolve symlinks to find actual installation directory
-SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE" ]]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  # If SOURCE is relative, resolve it relative to the symlink's directory
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_PATH="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+
 FLOW_HOME="$(cd "$SCRIPT_PATH/.." && pwd)"
 export FLOW_HOME
 
