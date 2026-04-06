@@ -1,0 +1,18 @@
+name: confluence
+description: "Confluence/PRD document integration"
+
+capability:
+  description: "Access Confluence pages via MCP tools"
+  mcp: [atlassian]
+
+variables:
+  - name: PRD_URL
+    description: "PRD/Confluence page URL"
+    cli_flag: --prd
+    persist: true
+    optional: true
+
+fragments:
+  - match: { phase: spec, type: write }
+    file: fragments/spec-write.md
+    position: after-instructions

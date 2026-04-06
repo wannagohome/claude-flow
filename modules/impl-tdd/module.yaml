@@ -1,0 +1,65 @@
+name: impl-tdd
+description: "TDD implementation with agent teams"
+phase: impl
+
+requires:
+  phases: [spec]
+
+stages:
+  - name: implement
+    type: write
+    prompt: prompts/implement.md
+    agents:
+      team_name: "impl-{FEATURE}"
+      delegate: true
+      members:
+        - name: domain
+          role: "Domain model + Use case TDD implementation"
+          instructions: agents/domain.md
+          plan_approval: true
+        - name: data
+          role: "DTO + Repository + Store implementation"
+          instructions: agents/data.md
+        - name: ui
+          role: "ViewModel + View + E2E test implementation"
+          instructions: agents/ui.md
+        - name: integrator
+          role: "DI registration + routing setup"
+          instructions: agents/integrator.md
+
+  - name: generate-review-checklist
+    type: gate
+    script: gates/generate-review-checklist.sh
+    deps: [implement]
+
+  - name: code-review
+    type: review
+    prompt: prompts/code-review.md
+    deps: [generate-review-checklist]
+    handler: code-review
+
+  - name: run-tests
+    type: test
+    deps: [code-review]
+    handler: test-run
+
+  - name: run-e2e
+    type: test
+    deps: [run-tests]
+    handler: test-e2e
+
+  - name: test-fix
+    type: review
+    prompt: prompts/test-fix.md
+    deps: [run-e2e]
+    handler: test-fix
+
+  - name: ui-verify
+    type: review
+    prompt: prompts/ui-verify.md
+    deps: [test-fix, run-e2e]
+    handler: ui-verify
+
+artifacts:
+  - "src/**"
+  - "tests/**"

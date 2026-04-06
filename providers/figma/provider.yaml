@@ -1,0 +1,26 @@
+name: figma
+description: "Figma design context integration"
+
+capability:
+  description: "Access Figma designs via MCP tools"
+  mcp: [figma-desktop]
+
+variables:
+  - name: FIGMA_URL
+    description: "Default Figma file URL"
+    cli_flag: --figma
+    persist: true
+    optional: true
+
+fragments:
+  - match: { phase: spec, type: write }
+    file: fragments/spec-write.md
+    position: after-instructions
+
+  - match: { phase: impl, type: write }
+    file: fragments/implement.md
+    position: after-instructions
+
+  - match: { stage: ui-verify }
+    file: fragments/ui-verify.md
+    position: after-instructions

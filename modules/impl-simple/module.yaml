@@ -1,0 +1,25 @@
+name: impl-simple
+description: "Simple implementation without agent teams"
+phase: impl
+
+requires:
+  phases: [spec]
+
+stages:
+  - name: implement
+    type: write
+    prompt: prompts/implement.md
+
+  - name: code-review
+    type: review
+    prompt: prompts/code-review.md
+    deps: [implement]
+
+  - name: run-tests
+    type: test
+    deps: [code-review]
+    handler: test-run
+
+artifacts:
+  - "src/**"
+  - "tests/**"

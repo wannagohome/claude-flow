@@ -1,0 +1,22 @@
+name: spec-from-requirements
+description: "Extract structured spec from existing requirements/PRD"
+phase: spec
+
+requires:
+  phases: []
+
+stages:
+  - name: spec-write
+    type: write
+    prompt: prompts/spec-write.md
+
+  - name: spec-review
+    type: audit
+    prompt: prompts/spec-review.md
+    deps: [spec-write]
+
+artifacts:
+  - spec/_overview.md
+  - spec/_screen-feature-map.md
+  - "spec/*.md"
+  - README.md

@@ -1,0 +1,41 @@
+name: spec-from-scratch
+description: "Define requirements and spec from scratch using user description"
+phase: spec
+
+requires:
+  phases: []
+
+stages:
+  - name: requirements-research
+    type: write
+    prompt: prompts/requirements-research.md
+
+  - name: requirements-define
+    type: write
+    prompt: prompts/requirements-define.md
+    deps: [requirements-research]
+
+  - name: requirements-review
+    type: review
+    prompt: prompts/requirements-review.md
+    deps: [requirements-define]
+
+  - name: manual-review-requirements
+    type: manual
+    deps: [requirements-review]
+
+  - name: spec-write
+    type: write
+    prompt: prompts/spec-write.md
+    deps: [manual-review-requirements]
+
+  - name: spec-review
+    type: audit
+    prompt: prompts/spec-review.md
+    deps: [spec-write]
+
+artifacts:
+  - spec/requirements.md
+  - spec/_overview.md
+  - "spec/*.md"
+  - README.md

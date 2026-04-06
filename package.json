@@ -1,0 +1,10 @@
+{
+  "name": "claude-flow",
+  "version": "0.1.0",
+  "description": "Multi-session pipeline orchestrator for Claude Code",
+  "bin": {
+    "claude-flow": "./bin/claude-flow"
+  },
+  "keywords": ["claude", "pipeline", "orchestrator", "ai", "tdd"],
+  "license": "MIT"
+}

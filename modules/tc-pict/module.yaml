@@ -1,0 +1,43 @@
+name: tc-pict
+description: "PICT-based combinatorial test planning"
+phase: test-plan
+
+requires:
+  tools: [pict]
+  phases: [spec]
+
+stages:
+  - name: param-extract
+    type: write
+    prompt: prompts/param-extract.md
+
+  - name: param-review
+    type: review
+    prompt: prompts/param-review.md
+    deps: [param-extract]
+
+  - name: pict-generate
+    type: gate
+    script: gates/pict-generate.sh
+    deps: [param-review]
+
+  - name: traceability-check
+    type: gate
+    script: gates/check-traceability.sh
+    deps: [pict-generate]
+
+  - name: plan-write-integration
+    type: write
+    prompt: prompts/plan-write-integration.md
+    deps: [traceability-check]
+
+  - name: plan-review-integration
+    type: review
+    prompt: prompts/plan-review-integration.md
+    deps: [plan-write-integration]
+
+artifacts:
+  - test-plan/integration/parameter-model.json
+  - test-plan/integration/test-combinations.json
+  - test-plan/integration/traceability-matrix.json
+  - test-plan/integration/test-plan-integration.md

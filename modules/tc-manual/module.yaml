@@ -1,0 +1,19 @@
+name: tc-manual
+description: "Manual test case writing without PICT"
+phase: test-plan
+
+requires:
+  phases: [spec]
+
+stages:
+  - name: plan-write-integration
+    type: write
+    prompt: prompts/plan-write-integration.md
+
+  - name: plan-review-integration
+    type: review
+    prompt: prompts/plan-review-integration.md
+    deps: [plan-write-integration]
+
+artifacts:
+  - test-plan/integration/test-plan-integration.md

@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+
+# Resolve symlinks to find actual installation directory
+SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FLOW_HOME="$(cd "$SCRIPT_PATH/.." && pwd)"
+export FLOW_HOME
+
+source "$FLOW_HOME/core/cli.sh"

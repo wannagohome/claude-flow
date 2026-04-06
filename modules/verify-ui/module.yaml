@@ -1,0 +1,14 @@
+name: verify-ui
+description: "UI verification against designs"
+phase: verify
+
+requires:
+  phases: [impl]
+
+stages:
+  - name: ui-verify
+    type: review
+    prompt: prompts/ui-verify.md
+    handler: ui-verify
+
+artifacts: []

@@ -1,0 +1,36 @@
+name: e2e-detox
+description: "Detox-based E2E test scenario planning"
+phase: test-plan
+
+requires:
+  phases: [spec]
+
+stages:
+  - name: scenario-extract
+    type: write
+    prompt: prompts/scenario-extract.md
+
+  - name: scenario-review
+    type: review
+    prompt: prompts/scenario-review.md
+    deps: [scenario-extract]
+
+  - name: coverage-check
+    type: gate
+    script: gates/check-coverage.sh
+    deps: [scenario-review]
+
+  - name: plan-write-e2e
+    type: write
+    prompt: prompts/plan-write-e2e.md
+    deps: [coverage-check]
+
+  - name: plan-review-e2e
+    type: review
+    prompt: prompts/plan-review-e2e.md
+    deps: [plan-write-e2e]
+
+artifacts:
+  - test-plan/e2e/user-flows.json
+  - test-plan/e2e/scenario-traceability-matrix.json
+  - test-plan/e2e/test-plan-e2e.md

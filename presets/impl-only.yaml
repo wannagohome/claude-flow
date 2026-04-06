@@ -1,0 +1,38 @@
+# Implementation Only: Design -> Implementation -> Verification
+# For when spec and test plans already exist
+project:
+  conventions: null
+
+providers:
+  figma: { enabled: false }
+  confluence: { enabled: false }
+
+models:
+  write: claude-opus-4-6
+  review: claude-sonnet-4-6
+  audit: claude-opus-4-6
+  escalation:
+    model: claude-opus-4-6
+    after_round: 5
+
+review:
+  max_rounds: 3
+
+phases:
+  design:
+    modules: [design-interface]
+    manual_gate: false
+  impl:
+    modules: [impl-tdd]
+    manual_gate: false
+  verify:
+    modules: [verify-ui]
+    manual_gate: false
+
+test:
+  unit:
+    command: "npm test"
+  e2e:
+    command: "npm run e2e"
+    update_command: "npm run e2e:update"
+    setup_command: null

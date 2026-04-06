@@ -1,0 +1,21 @@
+# claude-flow pipeline configuration
+# Docs: https://github.com/anthropics/claude-flow
+
+extends: full-tdd
+
+project:
+  conventions: ./flow/conventions.md
+
+providers:
+  figma:
+    enabled: false
+  confluence:
+    enabled: false
+
+# Uncomment to override default test commands:
+# test:
+#   unit:
+#     command: "npm test"
+#   e2e:
+#     command: "npm run e2e"
+#     update_command: "npm run e2e:update"

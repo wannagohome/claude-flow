@@ -1,0 +1,19 @@
+name: design-interface
+description: "Interface-level system design (no implementation)"
+phase: design
+
+requires:
+  phases: [spec]
+
+stages:
+  - name: system-design
+    type: write
+    prompt: prompts/system-design.md
+
+  - name: design-review
+    type: review
+    prompt: prompts/design-review.md
+    deps: [system-design]
+
+artifacts:
+  - design/interfaces.md
